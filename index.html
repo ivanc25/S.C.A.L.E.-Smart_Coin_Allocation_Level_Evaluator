@@ -1,323 +1,622 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>S.C.A.L.E. - Control Panel</title>
-    
-    <!-- Libreria Tailwind CSS per la grafica -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- CSS Custom per animazioni -->
-    <style>
-        @keyframes pulse-green {
-            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-        }
-        .connected-glow {
-            animation: pulse-green 2s infinite;
-        }
-        .transition-all { transition: all 0.3s ease; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>S.C.A.L.E. - PiggyBank BLE</title>
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --blue: #2563eb;
+      --blue-dark: #1d4ed8;
+      --green: #22c55e;
+      --green-dark: #16a34a;
+      --red: #ef4444;
+      --slate: #e2e8f0;
+      --indigo: #6366f1;
+      --indigo-dark: #4f46e5;
+      --orange-soft: #ffedd5;
+      --orange-text: #c2410c;
+      --yellow-soft: #fef9c3;
+      --yellow-text: #a16207;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
+      padding-bottom: 32px;
+    }
+
+    .wrap {
+      max-width: 460px;
+      margin: 0 auto;
+      padding: 28px 16px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 26px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 31px;
+      line-height: 1.1;
+      font-weight: 800;
+    }
+
+    .header p {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 22px;
+      margin-bottom: 18px;
+      box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+    }
+
+    .center { text-align: center; }
+
+    .status-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      margin: 0 auto 10px;
+      background: var(--red);
+    }
+
+    .status-dot.connected {
+      background: var(--green);
+      animation: pulse-green 2s infinite;
+    }
+
+    @keyframes pulse-green {
+      0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.65); }
+      70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+
+    .status-text {
+      font-weight: 650;
+      margin: 0 0 14px;
+      color: var(--muted);
+    }
+
+    .status-text.connected { color: var(--green-dark); }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 13px 14px;
+      font-size: 15px;
+      font-weight: 750;
+      cursor: pointer;
+      transition: transform 0.08s ease, background 0.2s ease, opacity 0.2s ease;
+      width: 100%;
+    }
+
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+    .btn-blue { background: var(--blue); color: white; }
+    .btn-blue:hover { background: var(--blue-dark); }
+    .btn-slate { background: var(--slate); color: #334155; }
+    .btn-green { background: var(--green); color: white; }
+    .btn-green:hover { background: var(--green-dark); }
+    .btn-indigo { background: var(--indigo); color: white; }
+    .btn-indigo:hover { background: var(--indigo-dark); }
+    .btn-red { background: var(--red); color: white; }
+
+    .hidden { display: none !important; }
+
+    .dashboard.disabled {
+      opacity: 0.48;
+      pointer-events: none;
+      filter: grayscale(0.1);
+    }
+
+    .balance-card {
+      background: linear-gradient(135deg, #3b82f6, #4f46e5);
+      color: white;
+      text-align: center;
+      border-radius: 22px;
+      padding: 24px;
+      margin-bottom: 18px;
+      box-shadow: 0 16px 32px rgba(59, 130, 246, 0.22);
+    }
+
+    .balance-label {
+      color: #dbeafe;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .balance-value {
+      font-size: 48px;
+      font-weight: 900;
+      line-height: 1;
+      margin: 0;
+    }
+
+    .limit-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 16px;
+      padding: 7px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.2);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .limit-pill.blocked { background: rgba(239, 68, 68, 0.92); }
+
+    h3 {
+      margin: 0 0 9px;
+      font-size: 18px;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.45;
+      margin: 0 0 14px;
+    }
+
+    .coin-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      text-align: center;
+      border-top: 1px solid var(--border);
+      padding-top: 15px;
+      margin-top: 6px;
+    }
+
+    .coin {
+      width: 43px;
+      height: 43px;
+      border-radius: 999px;
+      margin: 0 auto 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 900;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .coin.smallcoin { background: var(--orange-soft); color: var(--orange-text); }
+    .coin.bigcoin { background: var(--yellow-soft); color: var(--yellow-text); border-width: 2px; }
+
+    .count {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 800;
+      color: #334155;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .row > * { flex: 1; }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 13px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: #f8fafc;
+      font-size: 17px;
+      font-weight: 750;
+      outline: none;
+    }
+
+    input[type="number"]:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+    }
+
+    .feedback {
+      margin: 10px 0 0;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--green-dark);
+    }
+
+    .log {
+      height: 150px;
+      overflow: auto;
+      border-radius: 14px;
+      background: #020617;
+      color: #cbd5e1;
+      padding: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .warning {
+      border-color: #fed7aa;
+      background: #fff7ed;
+      color: #9a3412;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+  </style>
 </head>
-<body class="bg-slate-100 min-h-screen font-sans text-slate-800 pb-10">
+<body>
+  <main class="wrap">
+    <section class="header">
+      <h1>🐷 S.C.A.L.E.</h1>
+      <p>STM32WB PiggyBank BLE Dashboard</p>
+    </section>
 
-    <div class="max-w-md mx-auto p-4 pt-8">
-        
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-slate-900 flex justify-center items-center gap-2">
-                🐷 S.C.A.L.E.
-            </h1>
-            <p class="text-sm text-slate-500 mt-1">STM32WB BLE Control Panel</p>
+    <section id="browserWarning" class="card warning hidden"></section>
+
+    <section class="card center">
+      <div id="statusIndicator" class="status-dot"></div>
+      <p id="statusText" class="status-text">Disconnesso</p>
+      <button id="connectBtn" class="btn-blue">Cerca e connetti PiggyBank</button>
+      <button id="disconnectBtn" class="btn-slate hidden" style="margin-top:10px;">Disconnetti</button>
+    </section>
+
+    <section id="dashboard" class="dashboard disabled">
+      <section class="balance-card">
+        <div class="balance-label">Saldo attuale</div>
+        <p id="totalAmount" class="balance-value">€ 0.00</p>
+        <div id="limitStatus" class="limit-pill">🟢 Limite non raggiunto: servo aperto</div>
+      </section>
+
+      <section class="card">
+        <h3>Dettaglio scompartimenti</h3>
+        <p class="small">Il firmware invia 5 byte nell’ordine: 2€, 1€, 50c, 20c, 10c.</p>
+        <div class="coin-grid">
+          <div>
+            <div class="coin smallcoin">10c</div>
+            <p class="count" id="cnt10c">0</p>
+          </div>
+          <div>
+            <div class="coin smallcoin">20c</div>
+            <p class="count" id="cnt20c">0</p>
+          </div>
+          <div>
+            <div class="coin smallcoin">50c</div>
+            <p class="count" id="cnt50c">0</p>
+          </div>
+          <div>
+            <div class="coin bigcoin">1€</div>
+            <p class="count" id="cnt1e">0</p>
+          </div>
+          <div>
+            <div class="coin bigcoin">2€</div>
+            <p class="count" id="cnt2e">0</p>
+          </div>
         </div>
+      </section>
 
-        <!-- Connection Card -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6 text-center">
-            <div id="statusIndicator" class="w-4 h-4 rounded-full bg-red-500 mx-auto mb-3"></div>
-            <p id="statusText" class="font-medium mb-4 text-slate-600">Disconnesso</p>
-            <button id="connectBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl transition-all shadow-md active:scale-95">
-                Cerca e Connetti Bluetooth
-            </button>
-            <button id="disconnectBtn" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-3 px-4 rounded-xl transition-all mt-2 hidden">
-                Disconnetti
-            </button>
+      <section class="card">
+        <h3>Obiettivo / limite</h3>
+        <p class="small">Invia un valore a LIMIT come uint32 little-endian in centesimi. Nel firmware nuovo il servo si chiude automaticamente quando il saldo totale raggiunge o supera questo limite.</p>
+        <div class="row">
+          <input type="number" id="limitInput" placeholder="Es. 50" min="0" step="0.01" />
+          <button id="sendLimitBtn" class="btn-green" style="flex:0 0 105px;">Salva</button>
         </div>
+        <p id="limitFeedback" class="feedback hidden">Limite inviato.</p>
+      </section>
 
-        <!-- Dashboard (Nascosta se disconnesso) -->
-        <div id="dashboard" class="opacity-50 pointer-events-none transition-all duration-500">
-            
-            <!-- Saldo Totale -->
-            <div class="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg p-6 mb-6 text-white text-center relative overflow-hidden">
-                <p class="text-blue-100 text-sm uppercase tracking-wider font-semibold mb-1">Saldo Attuale</p>
-                <h2 class="text-5xl font-extrabold tracking-tight" id="totalAmount">€ 0.00</h2>
-                
-                <div id="servoStatus" class="mt-4 inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-1.5 rounded-full text-sm font-medium transition-colors">
-                    🟢 Fessura Aperta
-                </div>
-            </div>
+      <section class="card">
+        <h3>Debug</h3>
+        <div id="logBox" class="log"></div>
+      </section>
+    </section>
+  </main>
 
-            <!-- Dettaglio Monete -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
-                <h3 class="font-bold text-slate-800 mb-4 border-b pb-2">Dettaglio Scompartimenti</h3>
-                <div class="grid grid-cols-5 gap-2 text-center">
-                    <div>
-                        <div class="w-10 h-10 mx-auto rounded-full bg-orange-100 flex items-center justify-center text-orange-700 font-bold border border-orange-200 shadow-sm">10c</div>
-                        <p class="text-xs mt-1 text-slate-500 font-medium" id="cnt10c">0</p>
-                    </div>
-                    <div>
-                        <div class="w-10 h-10 mx-auto rounded-full bg-orange-100 flex items-center justify-center text-orange-700 font-bold border border-orange-200 shadow-sm">20c</div>
-                        <p class="text-xs mt-1 text-slate-500 font-medium" id="cnt20c">0</p>
-                    </div>
-                    <div>
-                        <div class="w-10 h-10 mx-auto rounded-full bg-orange-100 flex items-center justify-center text-orange-700 font-bold border border-orange-200 shadow-sm">50c</div>
-                        <p class="text-xs mt-1 text-slate-500 font-medium" id="cnt50c">0</p>
-                    </div>
-                    <div>
-                        <div class="w-11 h-11 mx-auto rounded-full bg-yellow-100 flex items-center justify-center text-yellow-700 font-bold border-2 border-yellow-300 shadow-sm">1€</div>
-                        <p class="text-xs mt-1 text-slate-500 font-medium" id="cnt1e">0</p>
-                    </div>
-                    <div>
-                        <div class="w-12 h-12 mx-auto rounded-full bg-yellow-100 flex items-center justify-center text-yellow-700 font-bold border-2 border-yellow-400 shadow-sm">2€</div>
-                        <p class="text-xs mt-1 text-slate-500 font-medium" id="cnt2e">0</p>
-                    </div>
-                </div>
-            </div>
+  <script>
+    // Firmware no-motor version:
+    // Service and characteristics are 128-bit UUIDs. Depending on how the ST BLE stack
+    // exposes UUID byte order to the browser, one of these profiles will match.
+    const BLE_PROFILES = [
+      {
+        label: 'normal UUID order',
+        service: '12345678-1234-5678-1234-56789abcdef0',
+        coins:   '12345678-1234-5678-1234-56789abcdef1',
+        limit:   '12345678-1234-5678-1234-56789abcdef2'
+      },
+      {
+        label: 'reversed ST byte order',
+        service: 'f0debc9a-7856-3412-7856-341278563412',
+        coins:   'f1debc9a-7856-3412-7856-341278563412',
+        limit:   'f2debc9a-7856-3412-7856-341278563412'
+      },
+      {
+        label: 'mixed GUID byte order',
+        service: '78563412-3412-7856-1234-56789abcdef0',
+        coins:   '78563412-3412-7856-1234-56789abcdef1',
+        limit:   '78563412-3412-7856-1234-56789abcdef2'
+      }
+    ];
 
-            <!-- Controllo Motore -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
-                <h3 class="font-bold text-slate-800 mb-2">Motore Smistamento</h3>
-                <p class="text-xs text-slate-500 mb-4">Avvia il motorino per far scendere le monete nello scivolo verso le bilance.</p>
-                <button id="startMotorBtn" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-2">
-                    <span>⚙️</span> Avvia Scivolo Monete
-                </button>
-                <p id="motorFeedback" class="text-sm text-indigo-600 mt-2 text-center hidden font-medium">Comando inviato al motore!</p>
-            </div>
+    const DEVICE_NAME_PREFIX = 'Piggy';
+    const optionalServices = [...new Set(BLE_PROFILES.map(p => p.service))];
 
-            <!-- Impostazione Limite -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                <h3 class="font-bold text-slate-800 mb-2">Obiettivo / Limite Chiusura</h3>
-                <p class="text-xs text-slate-500 mb-4">Questo valore verrà salvato nella memoria Flash dell'STM32.</p>
-                
-                <div class="flex items-center gap-3">
-                    <span class="text-xl font-bold text-slate-400">€</span>
-                    <input type="number" id="limitInput" placeholder="Es. 50" min="0" step="1" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-semibold text-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <button id="sendLimitBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl transition-all active:scale-95 shadow-md">
-                        Salva
-                    </button>
-                </div>
-                <p id="limitFeedback" class="text-sm text-green-600 mt-2 text-center hidden font-medium">Limite salvato in Flash!</p>
-            </div>
+    let bleDevice = null;
+    let bleServer = null;
+    let activeProfile = null;
+    let coinsCharacteristic = null;
+    let limitCharacteristic = null;
 
-        </div>
-    </div>
+    let currentTotal = 0; // cents
+    let currentLimit = 0; // cents
 
-    <!-- SCRIPT JAVASCRIPT: LOGICA BLUETOOTH -->
-    <script>
-        // ==========================================
-        // CONFIGURAZIONE UUID BLUETOOTH
-        // Inserire questi UUID in STM32CubeMX
-        // ==========================================
-        const PIGGYBANK_SERVICE_UUID = '12345678-1234-5678-1234-56789abcdef0';
-        const COINS_CHAR_UUID        = '12345678-1234-5678-1234-56789abcdef1'; // NOTIFY
-        const LIMIT_CHAR_UUID        = '12345678-1234-5678-1234-56789abcdef2'; // READ / WRITE
-        const MOTOR_CHAR_UUID        = '12345678-1234-5678-1234-56789abcdef3'; // WRITE
+    const $ = id => document.getElementById(id);
 
-        // Variabili Globali
-        let bleDevice = null;
-        let bleServer = null;
-        let coinsCharacteristic = null;
-        let limitCharacteristic = null;
-        let motorCharacteristic = null;
+    const connectBtn = $('connectBtn');
+    const disconnectBtn = $('disconnectBtn');
+    const statusIndicator = $('statusIndicator');
+    const statusText = $('statusText');
+    const dashboard = $('dashboard');
+    const browserWarning = $('browserWarning');
+    const logBox = $('logBox');
 
-        let currentTotal = 0; // in centesimi
-        let currentLimit = 0; // in centesimi
+    const limitInput = $('limitInput');
+    const sendLimitBtn = $('sendLimitBtn');
+    const limitFeedback = $('limitFeedback');
+    const limitStatus = $('limitStatus');
 
-        // Riferimenti UI
-        const connectBtn = document.getElementById('connectBtn');
-        const disconnectBtn = document.getElementById('disconnectBtn');
-        const statusIndicator = document.getElementById('statusIndicator');
-        const statusText = document.getElementById('statusText');
-        const dashboard = document.getElementById('dashboard');
-        
-        const limitInput = document.getElementById('limitInput');
-        const sendLimitBtn = document.getElementById('sendLimitBtn');
-        const limitFeedback = document.getElementById('limitFeedback');
-        const servoStatus = document.getElementById('servoStatus');
-        
-        const startMotorBtn = document.getElementById('startMotorBtn');
-        const motorFeedback = document.getElementById('motorFeedback');
+    function log(message) {
+      const time = new Date().toLocaleTimeString();
+      logBox.textContent += `[${time}] ${message}\n`;
+      logBox.scrollTop = logBox.scrollHeight;
+      console.log(message);
+    }
 
-        // Controllo compatibilità Web Bluetooth
-        if (!navigator.bluetooth) {
-            alert('Il tuo browser non supporta il Web Bluetooth. Usa Chrome o Edge.');
-            connectBtn.disabled = true;
-            connectBtn.innerText = "Browser Non Supportato";
-            connectBtn.classList.replace('bg-blue-600', 'bg-slate-400');
+    function setStatus(text, connected = false) {
+      statusText.textContent = text;
+      statusText.classList.toggle('connected', connected);
+      statusIndicator.classList.toggle('connected', connected);
+    }
+
+    function showFeedback(el, text) {
+      el.textContent = text;
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 2500);
+    }
+
+    function checkBrowserSupport() {
+      const warnings = [];
+      if (!navigator.bluetooth) {
+        warnings.push('Questo browser non supporta Web Bluetooth. Usa Chrome o Edge. Su iPhone/iPad Safari normalmente non funziona con Web Bluetooth.');
+        connectBtn.disabled = true;
+        connectBtn.textContent = 'Bluetooth web non supportato';
+      }
+      if (!window.isSecureContext) {
+        warnings.push('Web Bluetooth richiede HTTPS oppure localhost. Se apri il file direttamente e non compare il popup Bluetooth, avvia una piccola pagina locale con: python -m http.server 8000 e apri http://localhost:8000');
+      }
+      if (warnings.length > 0) {
+        browserWarning.textContent = warnings.join(' ');
+        browserWarning.classList.remove('hidden');
+      }
+    }
+
+    async function writeBytes(characteristic, bytes) {
+      const data = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+      if (characteristic.writeValueWithResponse) {
+        await characteristic.writeValueWithResponse(data);
+      } else {
+        await characteristic.writeValue(data);
+      }
+    }
+
+    async function findPiggyBankService(server) {
+      let lastError = null;
+      for (const profile of BLE_PROFILES) {
+        try {
+          const service = await server.getPrimaryService(profile.service);
+          activeProfile = profile;
+          log(`Service found with ${profile.label}: ${profile.service}`);
+          return service;
+        } catch (err) {
+          lastError = err;
         }
+      }
+      throw new Error('PiggyBank service not found. The board was found, but the GATT UUID does not match the web app. Last error: ' + (lastError ? lastError.message : 'none'));
+    }
 
-        // --- 1. CONNESSIONE BLUETOOTH ---
-        connectBtn.addEventListener('click', async () => {
-            try {
-                statusText.innerText = "Ricerca dispositivo...";
-                
-                bleDevice = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: [PIGGYBANK_SERVICE_UUID] }]
-                });
+    async function getCharacteristicWithFallback(service, key) {
+      // First try the UUID belonging to the detected service profile.
+      const candidates = [activeProfile[key], ...BLE_PROFILES.map(p => p[key])];
+      const uniqueCandidates = [...new Set(candidates)];
+      let lastError = null;
+      for (const uuid of uniqueCandidates) {
+        try {
+          const characteristic = await service.getCharacteristic(uuid);
+          log(`${key.toUpperCase()} characteristic found: ${uuid}`);
+          return characteristic;
+        } catch (err) {
+          lastError = err;
+        }
+      }
+      throw new Error(`${key.toUpperCase()} characteristic not found. Last error: ${lastError ? lastError.message : 'none'}`);
+    }
 
-                bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
-                
-                statusText.innerText = "Connessione al server GATT...";
-                bleServer = await bleDevice.gatt.connect();
+    connectBtn.addEventListener('click', async () => {
+      try {
+        logBox.textContent = '';
+        setStatus('Ricerca PiggyBank...', false);
+        log('Opening Web Bluetooth device chooser...');
 
-                statusText.innerText = "Recupero Servizi e Caratteristiche...";
-                const service = await bleServer.getPrimaryService(PIGGYBANK_SERVICE_UUID);
-
-                coinsCharacteristic = await service.getCharacteristic(COINS_CHAR_UUID);
-                limitCharacteristic = await service.getCharacteristic(LIMIT_CHAR_UUID);
-                motorCharacteristic = await service.getCharacteristic(MOTOR_CHAR_UUID);
-
-                // Start Notifiche Monete
-                await coinsCharacteristic.startNotifications();
-                coinsCharacteristic.addEventListener('characteristicvaluechanged', handleCoinUpdate);
-
-                // Leggi Limite Iniziale dalla Flash
-                try {
-                    const limitView = await limitCharacteristic.readValue();
-                    currentLimit = limitView.getUint32(0, true); 
-                    limitInput.value = (currentLimit / 100).toFixed(2);
-                } catch(e) {
-                    console.log("Limite non ancora impostato o non leggibile.");
-                }
-
-                uiConnected();
-
-            } catch (error) {
-                console.error("Errore di connessione:", error);
-                statusText.innerText = "Errore: " + error.message;
-            }
+        // Important: the firmware advertises the name PiggyBank, but not the service UUID.
+        // Therefore we filter by name and request service access through optionalServices.
+        bleDevice = await navigator.bluetooth.requestDevice({
+          filters: [{ namePrefix: DEVICE_NAME_PREFIX }],
+          optionalServices
         });
 
-        // --- 2. DISCONNESSIONE ---
-        disconnectBtn.addEventListener('click', () => {
-            if (bleDevice && bleDevice.gatt.connected) {
-                bleDevice.gatt.disconnect();
-            }
-        });
+        log(`Selected device: ${bleDevice.name || '(no name)'}`);
+        bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
 
-        function onDisconnected() {
-            uiDisconnected();
-            bleDevice = null;
-            bleServer = null;
+        setStatus('Connessione GATT...', false);
+        bleServer = await bleDevice.gatt.connect();
+
+        setStatus('Ricerca servizio PiggyBank...', false);
+        const service = await findPiggyBankService(bleServer);
+
+        setStatus('Ricerca caratteristiche...', false);
+        coinsCharacteristic = await getCharacteristicWithFallback(service, 'coins');
+        limitCharacteristic = await getCharacteristicWithFallback(service, 'limit');
+
+        await coinsCharacteristic.startNotifications();
+        coinsCharacteristic.addEventListener('characteristicvaluechanged', handleCoinUpdate);
+        log('COINS notifications enabled.');
+
+        await tryReadLimit();
+        uiConnected();
+      } catch (error) {
+        console.error(error);
+        log('ERROR: ' + error.message);
+        setStatus('Errore: ' + error.message, false);
+        uiDisconnected(false);
+      }
+    });
+
+    disconnectBtn.addEventListener('click', () => {
+      if (bleDevice && bleDevice.gatt && bleDevice.gatt.connected) {
+        bleDevice.gatt.disconnect();
+      }
+    });
+
+    function onDisconnected() {
+      log('Disconnected.');
+      uiDisconnected(true);
+    }
+
+    function handleCoinUpdate(event) {
+      const data = event.target.value;
+      if (data.byteLength < 5) {
+        log(`COINS notification too short: ${data.byteLength} byte(s)`);
+        return;
+      }
+
+      // Firmware order: PESI_MONETE = {2€, 1€, 0.50€, 0.20€, 0.10€}
+      const c2e = data.getUint8(0);
+      const c1e = data.getUint8(1);
+      const c50 = data.getUint8(2);
+      const c20 = data.getUint8(3);
+      const c10 = data.getUint8(4);
+
+      $('cnt10c').textContent = c10;
+      $('cnt20c').textContent = c20;
+      $('cnt50c').textContent = c50;
+      $('cnt1e').textContent = c1e;
+      $('cnt2e').textContent = c2e;
+
+      currentTotal = (c10 * 10) + (c20 * 20) + (c50 * 50) + (c1e * 100) + (c2e * 200);
+      $('totalAmount').textContent = '€ ' + (currentTotal / 100).toFixed(2);
+      updateLimitStatus();
+    }
+
+    async function tryReadLimit() {
+      try {
+        const value = await limitCharacteristic.readValue();
+        if (value.byteLength >= 4) {
+          currentLimit = value.getUint32(0, true);
+          limitInput.value = (currentLimit / 100).toFixed(2);
+          log(`Initial LIMIT read: ${currentLimit} cents`);
+          updateLimitStatus();
         }
+      } catch (err) {
+        log('LIMIT read skipped/failed: ' + err.message);
+      }
+    }
 
-        // --- 3. RICEZIONE DATI MONETE (NOTIFY) ---
-        function handleCoinUpdate(event) {
-            const dataView = event.target.value;
-            
-            if(dataView.byteLength >= 5) {
-                const c10 = dataView.getUint8(0);
-                const c20 = dataView.getUint8(1);
-                const c50 = dataView.getUint8(2);
-                const c1e = dataView.getUint8(3);
-                const c2e = dataView.getUint8(4);
+    sendLimitBtn.addEventListener('click', async () => {
+      if (!limitCharacteristic) return;
 
-                document.getElementById('cnt10c').innerText = c10;
-                document.getElementById('cnt20c').innerText = c20;
-                document.getElementById('cnt50c').innerText = c50;
-                document.getElementById('cnt1e').innerText = c1e;
-                document.getElementById('cnt2e').innerText = c2e;
+      const euroValue = parseFloat(limitInput.value);
+      if (Number.isNaN(euroValue) || euroValue < 0) {
+        alert('Inserisci un importo valido.');
+        return;
+      }
 
-                currentTotal = (c10 * 10) + (c20 * 20) + (c50 * 50) + (c1e * 100) + (c2e * 200);
-                document.getElementById('totalAmount').innerText = "€ " + (currentTotal / 100).toFixed(2);
+      currentLimit = Math.round(euroValue * 100);
+      const buffer = new ArrayBuffer(4);
+      const view = new DataView(buffer);
+      view.setUint32(0, currentLimit, true);
 
-                checkServoStatus();
-            }
-        }
+      try {
+        sendLimitBtn.disabled = true;
+        sendLimitBtn.textContent = 'Invio...';
+        await writeBytes(limitCharacteristic, new Uint8Array(buffer));
+        log(`LIMIT written: ${currentLimit} cents`);
+        showFeedback(limitFeedback, 'Limite inviato.');
+        updateLimitStatus();
+      } catch (err) {
+        console.error(err);
+        log('LIMIT write error: ' + err.message);
+        alert('Errore scrittura LIMIT: ' + err.message);
+      } finally {
+        sendLimitBtn.disabled = false;
+        sendLimitBtn.textContent = 'Salva';
+      }
+    });
 
-        // --- 4. INVIO NUOVO LIMITE (WRITE) ---
-        sendLimitBtn.addEventListener('click', async () => {
-            if (!limitCharacteristic) return;
+    function updateLimitStatus() {
+      if (currentLimit > 0 && currentTotal >= currentLimit) {
+        limitStatus.textContent = '🔴 Limite raggiunto: servo chiuso';
+        limitStatus.classList.add('blocked');
+      } else {
+        limitStatus.textContent = '🟢 Limite non raggiunto: servo aperto';
+        limitStatus.classList.remove('blocked');
+      }
+    }
 
-            let euroVal = parseFloat(limitInput.value);
-            if(isNaN(euroVal) || euroVal <= 0) {
-                alert("Inserisci un importo valido.");
-                return;
-            }
+    function uiConnected() {
+      setStatus('Connesso a PiggyBank', true);
+      connectBtn.classList.add('hidden');
+      disconnectBtn.classList.remove('hidden');
+      dashboard.classList.remove('disabled');
+      log('Ready. Set LIMIT or wait for COINS notifications. Servo closes automatically when total >= LIMIT.');
+    }
 
-            currentLimit = Math.floor(euroVal * 100); 
+    function uiDisconnected(clearDevice = true) {
+      setStatus('Disconnesso', false);
+      connectBtn.classList.remove('hidden');
+      disconnectBtn.classList.add('hidden');
+      dashboard.classList.add('disabled');
 
-            let buffer = new ArrayBuffer(4);
-            let view = new DataView(buffer);
-            view.setUint32(0, currentLimit, true);
+      coinsCharacteristic = null;
+      limitCharacteristic = null;
+      activeProfile = null;
+      bleServer = null;
+      if (clearDevice) bleDevice = null;
+    }
 
-            try {
-                sendLimitBtn.innerText = "Salvataggio...";
-                await limitCharacteristic.writeValue(buffer);
-                
-                sendLimitBtn.innerText = "Salva";
-                limitFeedback.classList.remove('hidden');
-                setTimeout(() => limitFeedback.classList.add('hidden'), 3000);
-
-                checkServoStatus();
-            } catch (error) {
-                console.error("Errore scrittura limite:", error);
-                alert("Errore di comunicazione.");
-                sendLimitBtn.innerText = "Salva";
-            }
-        });
-
-        // --- 5. INVIO COMANDO MOTORE (WRITE) ---
-        startMotorBtn.addEventListener('click', async () => {
-            if (!motorCharacteristic) return;
-            try {
-                let buffer = new Uint8Array([1]).buffer;
-                await motorCharacteristic.writeValue(buffer);
-                
-                motorFeedback.classList.remove('hidden');
-                setTimeout(() => motorFeedback.classList.add('hidden'), 3000);
-            } catch (error) {
-                console.error("Errore avvio motore:", error);
-                alert("Impossibile avviare il motore.");
-            }
-        });
-
-        // --- 6. LOGICA UI SERVO ---
-        function checkServoStatus() {
-            if(currentLimit > 0 && currentTotal >= currentLimit) {
-                servoStatus.innerHTML = "🔴 Fessura Bloccata (Limite Raggiunto)";
-                servoStatus.classList.remove('bg-white/20');
-                servoStatus.classList.add('bg-red-500/90', 'text-white', 'shadow-md');
-            } else {
-                servoStatus.innerHTML = "🟢 Fessura Aperta";
-                servoStatus.classList.remove('bg-red-500/90', 'text-white', 'shadow-md');
-                servoStatus.classList.add('bg-white/20');
-            }
-        }
-
-        // --- 7. GESTIONE STATI GRAFICA ---
-        function uiConnected() {
-            statusIndicator.classList.replace('bg-red-500', 'bg-green-500');
-            statusIndicator.classList.add('connected-glow');
-            statusText.innerText = "Connesso a STM32WB";
-            statusText.classList.replace('text-slate-600', 'text-green-600');
-            
-            connectBtn.classList.add('hidden');
-            disconnectBtn.classList.remove('hidden');
-            dashboard.classList.remove('opacity-50', 'pointer-events-none');
-        }
-
-        function uiDisconnected() {
-            statusIndicator.classList.replace('bg-green-500', 'bg-red-500');
-            statusIndicator.classList.remove('connected-glow');
-            statusText.innerText = "Disconnesso";
-            statusText.classList.replace('text-green-600', 'text-slate-600');
-            
-            connectBtn.classList.remove('hidden');
-            disconnectBtn.classList.add('hidden');
-            dashboard.classList.add('opacity-50', 'pointer-events-none');
-        }
-    </script>
+    checkBrowserSupport();
+    updateLimitStatus();
+  </script>
 </body>
 </html>
