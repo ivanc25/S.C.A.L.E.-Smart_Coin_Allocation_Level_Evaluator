@@ -1,0 +1,2 @@
+../Core/Src/servo_tg9e.c:7:6:ServoTG9e_Init	1
+../Core/Src/servo_tg9e.c:16:6:ServoTG9e_SetAngle	5

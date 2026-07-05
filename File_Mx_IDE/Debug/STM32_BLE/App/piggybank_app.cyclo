@@ -1,0 +1,6 @@
+../STM32_BLE/App/piggybank_app.c:92:6:PIGGYBANK_Notification	8
+../STM32_BLE/App/piggybank_app.c:147:6:PIGGYBANK_APP_EvtRx	3
+../STM32_BLE/App/piggybank_app.c:185:6:PIGGYBANK_APP_Init	1
+../STM32_BLE/App/piggybank_app.c:198:6:PIGGYBANK_APP_SendCoins	2
+../STM32_BLE/App/piggybank_app.c:210:10:PIGGYBANK_APP_GetLimitValue	1
+../STM32_BLE/App/piggybank_app.c:222:13:PIGGYBANK_Coins_SendNotification	3

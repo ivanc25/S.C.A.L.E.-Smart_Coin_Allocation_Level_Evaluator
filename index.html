@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>S.C.A.L.E. - PiggyBank BLE</title>
+  <title>S.C.A.L.E. - Dashboard BLE</title>
   <style>
     :root {
       --bg: #f1f5f9;
@@ -272,7 +272,7 @@
   <main class="wrap">
     <section class="header">
       <h1>🐷 S.C.A.L.E.</h1>
-      <p>STM32WB PiggyBank BLE Dashboard</p>
+      <p>Dashboard BLE per STM32WB PiggyBank</p>
     </section>
 
     <section id="browserWarning" class="card warning hidden"></section>
@@ -320,7 +320,7 @@
 
       <section class="card">
         <h3>Obiettivo / limite</h3>
-        <p class="small">Invia un valore a LIMIT come uint32 little-endian in centesimi. Nel firmware nuovo il servo si chiude automaticamente quando il saldo totale raggiunge o supera questo limite.</p>
+        <p class="small">Invia il limite alla caratteristica LIMIT come valore uint32 little-endian espresso in centesimi. Il servo viene gestito dal firmware e si chiude automaticamente quando il saldo totale raggiunge o supera questo valore.</p>
         <div class="row">
           <input type="number" id="limitInput" placeholder="Es. 50" min="0" step="0.01" />
           <button id="sendLimitBtn" class="btn-green" style="flex:0 0 105px;">Salva</button>
@@ -329,31 +329,31 @@
       </section>
 
       <section class="card">
-        <h3>Debug</h3>
+        <h3>Registro eventi</h3>
         <div id="logBox" class="log"></div>
       </section>
     </section>
   </main>
 
   <script>
-    // Firmware no-motor version:
-    // Service and characteristics are 128-bit UUIDs. Depending on how the ST BLE stack
-    // exposes UUID byte order to the browser, one of these profiles will match.
+    // Profili BLE utilizzati dal firmware.
+    // Sono presenti più formati UUID perché alcuni stack BLE espongono al browser
+    // l’ordine dei byte in modo diverso rispetto alla definizione nel firmware STM32.
     const BLE_PROFILES = [
       {
-        label: 'normal UUID order',
+        label: 'ordine UUID standard',
         service: '12345678-1234-5678-1234-56789abcdef0',
         coins:   '12345678-1234-5678-1234-56789abcdef1',
         limit:   '12345678-1234-5678-1234-56789abcdef2'
       },
       {
-        label: 'reversed ST byte order',
+        label: 'ordine byte ST invertito',
         service: 'f0debc9a-7856-3412-7856-341278563412',
         coins:   'f1debc9a-7856-3412-7856-341278563412',
         limit:   'f2debc9a-7856-3412-7856-341278563412'
       },
       {
-        label: 'mixed GUID byte order',
+        label: 'ordine GUID misto',
         service: '78563412-3412-7856-1234-56789abcdef0',
         coins:   '78563412-3412-7856-1234-56789abcdef1',
         limit:   '78563412-3412-7856-1234-56789abcdef2'
@@ -369,8 +369,8 @@
     let coinsCharacteristic = null;
     let limitCharacteristic = null;
 
-    let currentTotal = 0; // cents
-    let currentLimit = 0; // cents
+    let currentTotal = 0; // Saldo totale espresso in centesimi.
+    let currentLimit = 0; // Limite impostato dall’utente, espresso in centesimi.
 
     const $ = id => document.getElementById(id);
 
@@ -437,46 +437,47 @@
         try {
           const service = await server.getPrimaryService(profile.service);
           activeProfile = profile;
-          log(`Service found with ${profile.label}: ${profile.service}`);
+          log(`Servizio trovato con profilo ${profile.label}: ${profile.service}`);
           return service;
         } catch (err) {
           lastError = err;
         }
       }
-      throw new Error('PiggyBank service not found. The board was found, but the GATT UUID does not match the web app. Last error: ' + (lastError ? lastError.message : 'none'));
+      throw new Error('Servizio PiggyBank non trovato. La scheda è stata rilevata, ma gli UUID GATT non corrispondono alla web app. Ultimo errore: ' + (lastError ? lastError.message : 'nessuno'));
     }
 
     async function getCharacteristicWithFallback(service, key) {
-      // First try the UUID belonging to the detected service profile.
+      // Si prova prima la caratteristica del profilo BLE già riconosciuto.
+      // Gli altri UUID rimangono come compatibilità per eventuali differenze di ordine dei byte.
       const candidates = [activeProfile[key], ...BLE_PROFILES.map(p => p[key])];
       const uniqueCandidates = [...new Set(candidates)];
       let lastError = null;
       for (const uuid of uniqueCandidates) {
         try {
           const characteristic = await service.getCharacteristic(uuid);
-          log(`${key.toUpperCase()} characteristic found: ${uuid}`);
+          log(`Caratteristica ${key.toUpperCase()} trovata: ${uuid}`);
           return characteristic;
         } catch (err) {
           lastError = err;
         }
       }
-      throw new Error(`${key.toUpperCase()} characteristic not found. Last error: ${lastError ? lastError.message : 'none'}`);
+      throw new Error(`Caratteristica ${key.toUpperCase()} non trovata. Ultimo errore: ${lastError ? lastError.message : 'nessuno'}`);
     }
 
     connectBtn.addEventListener('click', async () => {
       try {
         logBox.textContent = '';
         setStatus('Ricerca PiggyBank...', false);
-        log('Opening Web Bluetooth device chooser...');
+        log('Apertura selezione dispositivo Web Bluetooth...');
 
-        // Important: the firmware advertises the name PiggyBank, but not the service UUID.
-        // Therefore we filter by name and request service access through optionalServices.
+        // Il firmware pubblicizza il nome PiggyBank.
+        // L’accesso alle caratteristiche viene richiesto tramite optionalServices.
         bleDevice = await navigator.bluetooth.requestDevice({
           filters: [{ namePrefix: DEVICE_NAME_PREFIX }],
           optionalServices
         });
 
-        log(`Selected device: ${bleDevice.name || '(no name)'}`);
+        log(`Dispositivo selezionato: ${bleDevice.name || '(senza nome)'}`);
         bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
 
         setStatus('Connessione GATT...', false);
@@ -491,13 +492,13 @@
 
         await coinsCharacteristic.startNotifications();
         coinsCharacteristic.addEventListener('characteristicvaluechanged', handleCoinUpdate);
-        log('COINS notifications enabled.');
+        log('Notifiche COINS abilitate.');
 
         await tryReadLimit();
         uiConnected();
       } catch (error) {
         console.error(error);
-        log('ERROR: ' + error.message);
+        log('ERRORE: ' + error.message);
         setStatus('Errore: ' + error.message, false);
         uiDisconnected(false);
       }
@@ -510,18 +511,19 @@
     });
 
     function onDisconnected() {
-      log('Disconnected.');
+      log('Disconnesso.');
       uiDisconnected(true);
     }
 
     function handleCoinUpdate(event) {
       const data = event.target.value;
       if (data.byteLength < 5) {
-        log(`COINS notification too short: ${data.byteLength} byte(s)`);
+        log(`Notifica COINS troppo corta: ${data.byteLength} byte`);
         return;
       }
 
-      // Firmware order: PESI_MONETE = {2€, 1€, 0.50€, 0.20€, 0.10€}
+      // Ordine dei byte ricevuti dal firmware: 2€, 1€, 50c, 20c, 10c.
+      // La visualizzazione viene poi riordinata dalla moneta più piccola alla più grande.
       const c2e = data.getUint8(0);
       const c1e = data.getUint8(1);
       const c50 = data.getUint8(2);
@@ -545,11 +547,11 @@
         if (value.byteLength >= 4) {
           currentLimit = value.getUint32(0, true);
           limitInput.value = (currentLimit / 100).toFixed(2);
-          log(`Initial LIMIT read: ${currentLimit} cents`);
+          log(`Lettura iniziale LIMIT: ${currentLimit} centesimi`);
           updateLimitStatus();
         }
       } catch (err) {
-        log('LIMIT read skipped/failed: ' + err.message);
+        log('Lettura LIMIT non disponibile: ' + err.message);
       }
     }
 
@@ -562,6 +564,8 @@
         return;
       }
 
+      // Conversione euro -> centesimi per evitare errori di arrotondamento
+      // e invio nel formato atteso dal firmware: uint32 little-endian.
       currentLimit = Math.round(euroValue * 100);
       const buffer = new ArrayBuffer(4);
       const view = new DataView(buffer);
@@ -571,12 +575,12 @@
         sendLimitBtn.disabled = true;
         sendLimitBtn.textContent = 'Invio...';
         await writeBytes(limitCharacteristic, new Uint8Array(buffer));
-        log(`LIMIT written: ${currentLimit} cents`);
+        log(`LIMIT scritto: ${currentLimit} centesimi`);
         showFeedback(limitFeedback, 'Limite inviato.');
         updateLimitStatus();
       } catch (err) {
         console.error(err);
-        log('LIMIT write error: ' + err.message);
+        log('Errore scrittura LIMIT: ' + err.message);
         alert('Errore scrittura LIMIT: ' + err.message);
       } finally {
         sendLimitBtn.disabled = false;
@@ -585,6 +589,7 @@
     });
 
     function updateLimitStatus() {
+      // Stato mostrato all’utente in base alla stessa condizione usata dal firmware.
       if (currentLimit > 0 && currentTotal >= currentLimit) {
         limitStatus.textContent = '🔴 Limite raggiunto: servo chiuso';
         limitStatus.classList.add('blocked');
@@ -599,7 +604,7 @@
       connectBtn.classList.add('hidden');
       disconnectBtn.classList.remove('hidden');
       dashboard.classList.remove('disabled');
-      log('Ready. Set LIMIT or wait for COINS notifications. Servo closes automatically when total >= LIMIT.');
+      log('Sistema pronto. Impostare il limite oppure attendere le notifiche COINS. Il servo viene chiuso automaticamente dal firmware quando il saldo raggiunge il limite.');
     }
 
     function uiDisconnected(clearDevice = true) {
