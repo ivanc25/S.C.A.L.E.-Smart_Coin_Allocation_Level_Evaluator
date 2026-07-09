@@ -1,7 +1,7 @@
 # 🐖 S.C.A.L.E. PiggyBank
 **S**mart **C**oin **A**llocation & **L**evel **E**valuator
 
-![STM32](https://img.shields.io/badge/STM32-WB09-blue) ![BLE](https://img.shields.io/badge/Bluetooth-5.4-blue) ![C](https://img.shields.io/badge/Language-C-orange) ![License](https://img.shields.io/badge/License-MIT-green)
+![STM32](https://img.shields.io/badge/STM32-WB09-blue) ![BLE](https://img.shields.io/badge/Bluetooth-5.4-blue) ![C](https://img.shields.io/badge/Language-C-orange)
 
 ## 📖 Descrizione del Progetto
 **S.C.A.L.E. PiggyBank** è un salvadanaio IoT intelligente basato su architettura **Edge-Computing**. Sviluppato per un progetto accademico presso il Politecnico di Bari, il sistema trasforma un oggetto passivo in un nodo interconnesso, capace di smistare meccanicamente le monete, calcolarne il valore tramite acquisizione gravimetrica ad alta precisione e comunicare il saldo in tempo reale via Bluetooth Low Energy (BLE) a una Web App dedicata.
